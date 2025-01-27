@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable Keyboard Trainer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        .trainer-container {
+            text-align: center;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .text-to-type {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .input-area {
+            font-size: 20px;
+            padding: 10px;
+            width: 100%;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        .input-area:focus {
+            border-color: #4CAF50;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .controls button, .controls select, .controls input {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .controls button {
+            background-color: #ff6f61;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .controls button:hover {
+            background-color: #e65c4d;
+        }
+
+        .results {
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .highlight-error {
+            color: red;
+        }
+
+        .highlight-correct {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+<div class="trainer-container">
+    <h1>Customizable Keyboard Trainer</h1>
+    <div class="text-to-type" id="text-to-type"></div>
+    <input type="text" class="input-area" id="input-area" placeholder="Start typing..." autofocus>
+    
+    <div class="controls">
+        <button id="start-btn" onclick="startTyping()">Start</button>
+        <button id="restart-btn" onclick="restartGame()" style="display: none;">Restart</button>
+        
+        <br><br>
+        
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty" onchange="adjustDifficulty()">
+            <option value="easy">Easy (Short, Simple)</option>
+            <option value="medium">Medium (Longer, No Special Characters)</option>
+            <option value="hard">Hard (Includes Special Characters)</option>
+        </select>
+        
+        <br><br>
+
+        <div class="results" id="results"></div>
+    </div>
+</div>
+
+<script>
+    let textToType = '';
+    let inputText = '';
+    let timer;
+    let startTime;
+    let totalWordsTyped = 0;
+    let errors = 0;
+    let gameActive = false;
+
+    // List of possible words and characters for each difficulty level
+    const wordBank = {
+        easy: ["cat", "dog", "sun", "moon", "star", "tree", "apple", "bike", "house", "sky"],
+        medium: ["elephant", "guitar", "dinosaur", "mountain", "freedom", "computer", "keyboard", "universe", "language", "creative"],
+        hard: ["$hello@", "#developer!", "science^", "programming~", "keyboard#", "technology*", "coding&", "error%", "debugging!", "algorithm$"]
+    };
+
+    // Adjust text to type based on selected difficulty
+    function adjustDifficulty() {
+        const difficulty = document.getElementById('difficulty').value;
+        setTextToType(difficulty);
+    }
+
+    // Generate random text based on difficulty
+    function setTextToType(difficulty) {
+        const words = wordBank[difficulty];
+        let randomText = '';
+        const wordCount = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 8 : 12;
+
+        for (let i = 0; i < wordCount; i++) {
+            randomText += words[Math.floor(Math.random() * words.length)] + ' ';
+        }
+
+        textToType = randomText.trim();
+        document.getElementById('text-to-type').innerText = textToType;
+    }
+
+    // Start the typing game
+    function startTyping() {
+        if (gameActive) return;
+        
+        gameActive = true;
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('restart-btn').style.display = 'block';
+        document.getElementById('input-area').disabled = false;
+        document.getElementById('input-area').value = '';
+        document.getElementById('input-area').focus();
+        errors = 0;
+        totalWordsTyped = 0;
+        setTextToType(document.getElementById('difficulty').value);
+
+        startTime = Date.now();
+        timer = setInterval(updateResults, 100);
+    }
+
+    // Track the user's input and compare with the target text
+    document.getElementById('input-area').addEventListener('input', function() {
+        if (!gameActive) return;
+
+        inputText = document.getElementById('input-area').value;
+        let highlightedText = '';
+
+        for (let i = 0; i < inputText.length; i++) {
+            if (inputText[i] === textToType[i]) {
+                highlightedText += `<span class="highlight-correct">${inputText[i]}</span>`;
+            } else {
+                highlightedText += `<span class="highlight-error">${inputText[i]}</span>`;
+                errors++;
+            }
+        }
+
+        for (let i = inputText.length; i < textToType.length; i++) {
+            highlightedText += textToType[i] === ' ' ? ' ' : `<span>${textToType[i]}</span>`;
+        }
+
+        document.getElementById('text-to-type').innerHTML = highlightedText;
+
+        // Stop the game if the user has typed the whole string correctly
+        if (inputText === textToType) {
+            clearInterval(timer);
+            gameActive = false;
+            calculateResults();
+        }
+    });
+
+    // Calculate the results (WPM and accuracy)
+    function updateResults() {
+        const elapsedTime = (Date.now() - startTime) / 1000; // Time in seconds
+        const wordsPerMinute = (inputText.split(' ').length / elapsedTime) * 60;
+        document.getElementById('results').innerHTML = `WPM: ${Math.round(wordsPerMinute)} | Accuracy: ${getAccuracy()}%`;
+    }
+
+    // Calculate accuracy
+    function getAccuracy() {
+        const correctChars = textToType.length - errors;
+        return ((correctChars / textToType.length) * 100).toFixed(2);
+    }
+
+    // Show final results
+    function calculateResults() {
+        const wpm = Math.round((inputText.split(' ').length / ((Date.now() - startTime) / 1000)) * 60);
+        const accuracy = getAccuracy();
+        document.getElementById('results').innerHTML = `Game Over! WPM: ${wpm} | Accuracy: ${accuracy}%`;
+    }
+
+    // Restart the game
+    function restartGame() {
+        gameActive = false;
+        document.getElementById('start-btn').style.display = 'block';
+        document.getElementById('restart-btn').style.display = 'none';
+        document.getElementById('input-area').value = '';
+        document.getElementById('input-area').disabled = true;
+        document.getElementById('results').innerHTML = '';
+        setTextToType(document.getElementById('difficulty').value);
+    }
+
+    // Initial game setup
+    setTextToType('easy');
+</script>
+
+</body>
+</html>

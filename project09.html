@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Visualization Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .array-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .array-bar {
+            width: 30px;
+            margin: 0 2px;
+            background-color: #4CAF50;
+            transition: all 0.2s ease;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .controls button, .controls select, .controls input {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .controls button {
+            background-color: #ff6f61;
+            color: white;
+        }
+
+        .controls button:hover {
+            background-color: #e65c4d;
+        }
+
+        .controls select {
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .controls input {
+            width: 80px;
+        }
+
+        .commentary {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sorting Visualization Tool</h1>
+    <div class="array-container" id="array-container"></div>
+
+    <div class="controls">
+        <button id="generate-array" onclick="generateArray()">Generate New Array</button>
+        <button id="start-sort" onclick="startSort()">Start Sorting</button>
+        <select id="algorithm-select">
+            <option value="bubble">Bubble Sort</option>
+            <option value="insertion">Insertion Sort</option>
+        </select>
+        <button id="speed-control" onclick="adjustSpeed()">Control Animation Speed</button>
+        <input type="number" id="speed" value="200" min="10" max="1000">
+    </div>
+
+    <div class="commentary" id="commentary">Select an algorithm and press "Start Sorting" to see the visualization.</div>
+</div>
+
+<script>
+    let array = [];
+    let bars = [];
+    let isSorting = false;
+    let speed = 200;
+    let algorithm = 'bubble';
+
+    // Generate an array of random integers
+    function generateArray() {
+        array = [];
+        bars = [];
+        for (let i = 0; i < 50; i++) {
+            array.push(Math.floor(Math.random() * 100) + 1);
+        }
+        renderArray();
+    }
+
+    // Render the array bars
+    function renderArray() {
+        const container = document.getElementById("array-container");
+        container.innerHTML = '';  // Clear previous bars
+        array.forEach((value, index) => {
+            const bar = document.createElement("div");
+            bar.classList.add("array-bar");
+            bar.style.height = `${value * 3}px`; // Height proportional to the value
+            container.appendChild(bar);
+            bars.push(bar);
+        });
+    }
+
+    // Bubble Sort Algorithm
+    async function bubbleSort() {
+        const commentary = document.getElementById("commentary");
+        for (let i = 0; i < array.length - 1; i++) {
+            for (let j = 0; j < array.length - 1 - i; j++) {
+                // Highlight bars being compared
+                bars[j].style.backgroundColor = 'red';
+                bars[j + 1].style.backgroundColor = 'red';
+                commentary.innerText = `Comparing ${array[j]} and ${array[j + 1]}`;
+
+                // Wait for animation speed before proceeding
+                await new Promise(resolve => setTimeout(resolve, speed));
+
+                if (array[j] > array[j + 1]) {
+                    // Swap the values
+                    [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                    renderArray();
+                }
+
+                // Reset bar colors
+                bars[j].style.backgroundColor = '#4CAF50';
+                bars[j + 1].style.backgroundColor = '#4CAF50';
+            }
+        }
+        commentary.innerText = "Sorting completed!";
+    }
+
+    // Insertion Sort Algorithm
+    async function insertionSort() {
+        const commentary = document.getElementById("commentary");
+        for (let i = 1; i < array.length; i++) {
+            let key = array[i];
+            let j = i - 1;
+
+            // Highlight the key bar
+            bars[i].style.backgroundColor = 'red';
+            commentary.innerText = `Inserting ${key} into sorted portion of the array`;
+
+            // Wait for animation speed before proceeding
+            await new Promise(resolve => setTimeout(resolve, speed));
+
+            while (j >= 0 && array[j] > key) {
+                array[j + 1] = array[j];
+                j = j - 1;
+                renderArray();
+            }
+            array[j + 1] = key;
+            renderArray();
+
+            // Reset bar color
+            bars[i].style.backgroundColor = '#4CAF50';
+        }
+        commentary.innerText = "Sorting completed!";
+    }
+
+    // Start sorting based on selected algorithm
+    async function startSort() {
+        if (isSorting) return; // Prevent starting a new sort if already sorting
+        isSorting = true;
+
+        const selectedAlgorithm = document.getElementById("algorithm-select").value;
+        speed = document.getElementById("speed").value;
+
+        if (selectedAlgorithm === 'bubble') {
+            await bubbleSort();
+        } else if (selectedAlgorithm === 'insertion') {
+            await insertionSort();
+        }
+
+        isSorting = false;
+    }
+
+    // Adjust the animation speed based on user input
+    function adjustSpeed() {
+        speed = document.getElementById("speed").value;
+    }
+
+    // Event listener for changing speed
+    document.getElementById("speed").addEventListener("input", (event) => {
+        speed = event.target.value;
+    });
+
+    // Initial call to generate the array
+    generateArray();
+
+</script>
+
+</body>
+</html>

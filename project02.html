@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive To-Do List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .todo-container {
+      width: 400px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .input-group {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    #taskInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #addTaskBtn {
+      padding: 10px 15px;
+      background-color: #000000;
+      color: rgb(255, 0, 0);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    #addTaskBtn:hover {
+      background-color: #e77474;
+    }
+
+    .filter {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .filter select {
+      padding: 8px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .task-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ff0000;
+      cursor: move;
+    }
+
+    .task-item.completed {
+      text-decoration: line-through;
+      background-color: #e0e0e0;
+    }
+
+    .task-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #999;
+      font-size: 1rem;
+      margin-left: 5px;
+    }
+
+    .task-actions button:hover {
+      color: #ff0000;
+    }
+
+    .task-actions {
+      display: flex;
+      align-items: center;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="todo-container">
+    <h2>To-Do List</h2>
+
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Enter a new task" />
+      <button id="addTaskBtn">Add Task</button>
+    </div>
+
+    <div class="filter">
+      <select id="filterTasks">
+        <option value="all">All</option>
+        <option value="completed">Completed</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+
+    <ul id="taskList" class="task-list"></ul>
+  </div>
+
+  <script>
+    const taskInput = document.getElementById('taskInput');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const filterTasks = document.getElementById('filterTasks');
+    const taskList = document.getElementById('taskList');
+
+    // Load tasks from localStorage
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    // Display tasks based on the filter
+    function renderTasks(filter = 'all') {
+      taskList.innerHTML = '';
+      const filteredTasks = tasks.filter(task => {
+        if (filter === 'completed') return task.completed;
+        if (filter === 'pending') return !task.completed;
+        return true; // all
+      });
+
+      filteredTasks.forEach((task, index) => {
+        const taskItem = document.createElement('li');
+        taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+        taskItem.draggable = true;
+
+        taskItem.innerHTML = `
+          <span>${task.text}</span>
+          <div class="task-actions">
+            <button onclick="toggleTaskCompletion(${index})">${task.completed ? 'Undo' : 'Complete'}</button>
+            <button onclick="editTask(${index})">Edit</button>
+            <button onclick="deleteTask(${index})">Delete</button>
+          </div>
+        `;
+
+        taskList.appendChild(taskItem);
+
+        // Enable drag and drop functionality
+        taskItem.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', index);
+        });
+
+        taskItem.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+
+        taskItem.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const draggedIndex = e.dataTransfer.getData('text/plain');
+          swapTasks(index, draggedIndex);
+        });
+      });
+    }
+
+    // Add a new task
+    function addTask() {
+      const taskText = taskInput.value.trim();
+      if (taskText === '') return;
+
+      tasks.push({ text: taskText, completed: false });
+      taskInput.value = '';
+      saveTasks();
+      renderTasks(filterTasks.value);
+    }
+
+    // Toggle task completion
+    function toggleTaskCompletion(index) {
+      tasks[index].completed = !tasks[index].completed;
+      saveTasks();
+      renderTasks(filterTasks.value);
+    }
+
+    // Edit a task
+    function editTask(index) {
+      const newText = prompt('Edit task:', tasks[index].text);
+      if (newText !== null) {
+        tasks[index].text = newText;
+        saveTasks();
+        renderTasks(filterTasks.value);
+      }
+    }
+
+    // Delete a task
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      saveTasks();
+      renderTasks(filterTasks.value);
+    }
+
+    // Swap tasks during drag and drop
+    function swapTasks(index1, index2) {
+      const temp = tasks[index1];
+      tasks[index1] = tasks[index2];
+      tasks[index2] = temp;
+      saveTasks();
+      renderTasks(filterTasks.value);
+    }
+
+    // Save tasks to localStorage
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Handle task filtering
+    filterTasks.addEventListener('change', () => {
+      renderTasks(filterTasks.value);
+    });
+
+    // Handle task input submission
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addTask();
+    });
+
+    // Initial render
+    renderTasks('all');
+  </script>
+
+</body>
+</html>

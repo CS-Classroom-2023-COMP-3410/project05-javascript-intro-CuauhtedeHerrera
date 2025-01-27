@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1d1d1d;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .calculator {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .calculator input {
+            width: 230px;
+            padding: 10px;
+            font-size: 20px;
+            text-align: right;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 60px);
+            gap: 10px;
+        }
+
+        .buttons button {
+            padding: 20px;
+            font-size: 18px;
+            background-color: #444;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .buttons button:hover {
+            background-color: #666;
+        }
+
+        .buttons button:active {
+            background-color: #e60000;
+        }
+
+        .buttons button.equal {
+            background-color: #e60000;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <input type="text" id="display" readonly placeholder="0">
+        <div class="buttons">
+            <button id="clear">C</button>
+            <button id="backspace">←</button>
+            <button id="percent">%</button>
+            <button id="divide">/</button>
+            <button id="7">7</button>
+            <button id="8">8</button>
+            <button id="9">9</button>
+            <button id="multiply">*</button>
+            <button id="4">4</button>
+            <button id="5">5</button>
+            <button id="6">6</button>
+            <button id="subtract">-</button>
+            <button id="1">1</button>
+            <button id="2">2</button>
+            <button id="3">3</button>
+            <button id="add">+</button>
+            <button id="0">0</button>
+            <button id="decimal">.</button>
+            <button id="sqrt">√</button>
+            <button class="equal" id="equal">=</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById("display");
+        let currentInput = "";
+        let memory = "";
+
+        // Append input to display
+        function updateDisplay(value) {
+            if (currentInput === "Error") {
+                currentInput = "";
+            }
+            if (currentInput.length < 15) {
+                currentInput += value;
+                display.value = currentInput;
+            }
+        }
+
+        // Clear the display
+        function clearDisplay() {
+            currentInput = "";
+            display.value = "0";
+        }
+
+        // Handle backspace
+        function backspace() {
+            currentInput = currentInput.slice(0, -1);
+            if (currentInput === "") {
+                currentInput = "0";
+            }
+            display.value = currentInput;
+        }
+
+        // Calculate result
+        function calculate() {
+            try {
+                currentInput = eval(currentInput).toString();
+                display.value = currentInput;
+            } catch (e) {
+                display.value = "Error";
+                currentInput = "Error";
+            }
+        }
+
+        // Handle percent
+        function calculatePercentage() {
+            try {
+                currentInput = (parseFloat(currentInput) / 100).toString();
+                display.value = currentInput;
+            } catch (e) {
+                display.value = "Error";
+                currentInput = "Error";
+            }
+        }
+
+        // Handle square root
+        function calculateSquareRoot() {
+            try {
+                currentInput = Math.sqrt(parseFloat(currentInput)).toString();
+                display.value = currentInput;
+            } catch (e) {
+                display.value = "Error";
+                currentInput = "Error";
+            }
+        }
+
+        // Assign event listeners to buttons
+        document.getElementById("clear").addEventListener("click", clearDisplay);
+        document.getElementById("backspace").addEventListener("click", backspace);
+        document.getElementById("equal").addEventListener("click", calculate);
+        document.getElementById("percent").addEventListener("click", calculatePercentage);
+        document.getElementById("sqrt").addEventListener("click", calculateSquareRoot);
+
+        // Number buttons
+        document.getElementById("0").addEventListener("click", () => updateDisplay("0"));
+        document.getElementById("1").addEventListener("click", () => updateDisplay("1"));
+        document.getElementById("2").addEventListener("click", () => updateDisplay("2"));
+        document.getElementById("3").addEventListener("click", () => updateDisplay("3"));
+        document.getElementById("4").addEventListener("click", () => updateDisplay("4"));
+        document.getElementById("5").addEventListener("click", () => updateDisplay("5"));
+        document.getElementById("6").addEventListener("click", () => updateDisplay("6"));
+        document.getElementById("7").addEventListener("click", () => updateDisplay("7"));
+        document.getElementById("8").addEventListener("click", () => updateDisplay("8"));
+        document.getElementById("9").addEventListener("click", () => updateDisplay("9"));
+        document.getElementById("decimal").addEventListener("click", () => updateDisplay("."));
+        
+        // Operator buttons
+        document.getElementById("add").addEventListener("click", () => updateDisplay("+"));
+        document.getElementById("subtract").addEventListener("click", () => updateDisplay("-"));
+        document.getElementById("multiply").addEventListener("click", () => updateDisplay("*"));
+        document.getElementById("divide").addEventListener("click", () => updateDisplay("/"));
+    </script>
+
+</body>
+</html>

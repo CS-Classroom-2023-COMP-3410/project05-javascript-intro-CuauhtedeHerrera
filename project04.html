@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Quiz App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1c1c1c; /* Dark background */
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .quiz-container {
+      background-color: #333; /* Dark grey background for the container */
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .question {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: #f39c12; /* Gold/yellow color for question text */
+    }
+
+    .options {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .options li {
+      margin-bottom: 10px;
+    }
+
+    .options button {
+      padding: 10px;
+      width: 100%;
+      background-color: #e74c3c; /* Red buttons */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .options button:hover {
+      background-color: #c0392b; /* Darker red for hover effect */
+    }
+
+    .feedback {
+      font-size: 1rem;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #f39c12; /* Gold/yellow color for feedback */
+    }
+
+    #result-container {
+      display: none;
+      text-align: center;
+    }
+
+    #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #e74c3c; /* Red button */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #restartBtn:hover {
+      background-color: #c0392b; /* Darker red for hover effect */
+    }
+
+    #reviewBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #f39c12; /* Yellow button */
+      color: black;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #reviewBtn:hover {
+      background-color: #e67e22; /* Darker yellow for hover effect */
+    }
+
+    #nextBtn {
+      background-color: #2980b9; /* Blue button */
+      color: white;
+      font-size: 1rem;
+    }
+
+    #nextBtn:hover {
+      background-color: #1f6690;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-container">
+    <div id="quiz-content">
+      <div class="question" id="question">Question will go here</div>
+      <ul class="options" id="options"></ul>
+      <div class="feedback" id="feedback"></div>
+      <button id="nextBtn" style="display:none" onclick="nextQuestion()">Next Question</button>
+      <button id="reviewBtn" style="display:none" onclick="reviewAnswers()">Review Answers</button>
+    </div>
+    
+    <div id="result-container">
+      <h2>Quiz Completed</h2>
+      <p id="score"></p>
+      <p><strong>Correct Answers:</strong></p>
+      <ul id="correct-answers-list"></ul>
+      <button id="restartBtn" onclick="startNewQuiz()">Restart Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "What is the capital of France?",
+        options: ["Berlin", "Madrid", "Paris", "Lisbon"],
+        correctAnswer: "Paris"
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Saturn"],
+        correctAnswer: "Mars"
+      },
+      {
+        question: "What is the largest ocean on Earth?",
+        options: ["Atlantic", "Indian", "Arctic", "Pacific"],
+        correctAnswer: "Pacific"
+      },
+      {
+        question: "Who wrote 'Romeo and Juliet'?",
+        options: ["Shakespeare", "Dickens", "Austen", "Hemingway"],
+        correctAnswer: "Shakespeare"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answers = [];
+    let answerSelected = false;
+    let reviewMode = false;
+
+    // Display the first question
+    function displayQuestion() {
+      const currentQuestion = questions[currentQuestionIndex];
+      document.getElementById('question').textContent = currentQuestion.question;
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+
+      currentQuestion.options.forEach(option => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.onclick = () => selectAnswer(option);
+        const listItem = document.createElement('li');
+        listItem.appendChild(button);
+        optionsContainer.appendChild(listItem);
+      });
+      
+      // Reset feedback and review button visibility
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('reviewBtn').style.display = 'none';
+      document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    // Handle answer selection
+    function selectAnswer(selectedOption) {
+      if (answerSelected && !reviewMode) return; // Prevent multiple answers for the same question
+
+      const currentQuestion = questions[currentQuestionIndex];
+      const correct = selectedOption === currentQuestion.correctAnswer;
+      if (!reviewMode) {
+        answers.push({
+          question: currentQuestion.question,
+          selectedAnswer: selectedOption,
+          correct: correct
+        });
+      }
+
+      // Show feedback
+      const feedbackElement = document.getElementById('feedback');
+      feedbackElement.textContent = correct ? "Correct!" : `Incorrect! The correct answer is: ${currentQuestion.correctAnswer}`;
+      if (correct) {
+        score++;
+      }
+
+      // Disable options after selection
+      const buttons = document.querySelectorAll('.options button');
+      buttons.forEach(button => button.disabled = true);
+
+      answerSelected = true;
+
+      // Show the "Next Question" button and "Review Answers" button
+      if (!reviewMode) {
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        document.getElementById('reviewBtn').style.display = 'inline-block';
+      }
+    }
+
+    // Go to the next question
+    function nextQuestion() {
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < questions.length) {
+        answerSelected = false;
+        reviewMode = false;
+        displayQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    // Review answers
+    function reviewAnswers() {
+      reviewMode = true;
+      const currentQuestion = questions[currentQuestionIndex];
+      const answerData = answers.find(answer => answer.question === currentQuestion.question);
+      
+      // Show the answer the user selected
+      const feedbackElement = document.getElementById('feedback');
+      feedbackElement.textContent = `You selected: ${answerData.selectedAnswer}`;
+      
+      // Re-enable the buttons so the user can select again if they want to
+      const buttons = document.querySelectorAll('.options button');
+      buttons.forEach(button => button.disabled = false);
+
+      // Show "Next Question" and hide the "Review Answers" button
+      document.getElementById('nextBtn').style.display = 'inline-block';
+      document.getElementById('reviewBtn').style.display = 'none';
+    }
+
+    // Show quiz results
+    function showResults() {
+      document.getElementById('quiz-content').style.display = 'none';
+      const scoreText = `Your Score: ${score} / ${questions.length}`;
+      document.getElementById('score').textContent = scoreText;
+
+      const correctAnswersList = document.getElementById('correct-answers-list');
+      answers.forEach(answer => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${answer.question} - Your answer: ${answer.selectedAnswer} (Correct answer: ${answer.correct ? answer.selectedAnswer : answer.correctAnswer})`;
+        correctAnswersList.appendChild(listItem);
+      });
+
+      document.getElementById('result-container').style.display = 'block';
+    }
+
+    // Restart the quiz
+    function startNewQuiz() {
+      currentQuestionIndex = 0;
+      score = 0;
+      answers = [];
+      answerSelected = false;
+      reviewMode = false;
+      document.getElementById('result-container').style.display = 'none';
+      document.getElementById('quiz-content').style.display = 'block';
+      displayQuestion();
+    }
+
+    // Initialize quiz
+    displayQuestion();
+
+  </script>
+
+</body>
+</html>

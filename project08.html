@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Story Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .game-container {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .story-text {
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .options button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .options button:hover {
+            background-color: #45a049;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .controls button {
+            padding: 8px 15px;
+            font-size: 16px;
+            border: none;
+            background-color: #ff6f61;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background-color: #e65c4d;
+        }
+
+        .controls button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Interactive Story Game</h1>
+        <div id="storyText" class="story-text"></div>
+        <div class="options" id="options"></div>
+        <div class="controls">
+            <button id="resetButton" onclick="resetGame()">Restart Game</button>
+            <button id="saveButton" onclick="saveProgress()">Save Game</button>
+        </div>
+        <div class="progress" id="progressText"></div>
+    </div>
+
+    <script>
+        // Game state variables
+        let currentScene = 0;
+        let progress = {};
+
+        // Story data (Branching narrative)
+        const story = [
+            {
+                text: "You find yourself at the entrance of a dark cave. What do you do?",
+                options: [
+                    { text: "Enter the cave", nextScene: 1 },
+                    { text: "Walk away", nextScene: 2 }
+                ]
+            },
+            {
+                text: "You step into the cave, and the air grows colder. Do you keep going or turn back?",
+                options: [
+                    { text: "Keep going", nextScene: 3 },
+                    { text: "Turn back", nextScene: 4 }
+                ]
+            },
+            {
+                text: "You walk away and find a peaceful village. Do you explore or rest?",
+                options: [
+                    { text: "Explore the village", nextScene: 5 },
+                    { text: "Rest at the inn", nextScene: 6 }
+                ]
+            },
+            {
+                text: "You keep walking through the cave and find a treasure chest! You win!",
+                options: []
+            },
+            {
+                text: "You turn back and walk out of the cave safely. You win!",
+                options: []
+            },
+            {
+                text: "You explore the village and meet a merchant selling magical items. Do you buy something?",
+                options: [
+                    { text: "Yes, buy an item", nextScene: 7 },
+                    { text: "No, leave the village", nextScene: 8 }
+                ]
+            },
+            {
+                text: "You rest at the inn and have a peaceful night. The next day, you feel rejuvenated.",
+                options: []
+            },
+            {
+                text: "You bought a magical sword! Now you are ready for more adventures.",
+                options: []
+            },
+            {
+                text: "You leave the village and head into the unknown. The adventure continues...",
+                options: []
+            }
+        ];
+
+        // Load saved progress from localStorage
+        function loadGame() {
+            const savedProgress = localStorage.getItem("gameProgress");
+            if (savedProgress) {
+                progress = JSON.parse(savedProgress);
+                currentScene = progress.scene || 0;
+                updateGame();
+            } else {
+                progress = {};
+                currentScene = 0;
+                updateGame();
+            }
+        }
+
+        // Save game progress to localStorage
+        function saveProgress() {
+            progress.scene = currentScene;
+            localStorage.setItem("gameProgress", JSON.stringify(progress));
+            alert("Game progress saved!");
+        }
+
+        // Reset the game
+        function resetGame() {
+            localStorage.removeItem("gameProgress");
+            progress = {};
+            currentScene = 0;
+            updateGame();
+        }
+
+        // Update game display (story text, options, and progress)
+        function updateGame() {
+            const scene = story[currentScene];
+            document.getElementById("storyText").innerText = scene.text;
+
+            const optionsDiv = document.getElementById("options");
+            optionsDiv.innerHTML = "";
+            scene.options.forEach(option => {
+                const button = document.createElement("button");
+                button.innerText = option.text;
+                button.onclick = () => {
+                    currentScene = option.nextScene;
+                    saveProgress();
+                    updateGame();
+                };
+                optionsDiv.appendChild(button);
+            });
+
+            // Update progress text
+            document.getElementById("progressText").innerText = `Current Scene: ${currentScene + 1}`;
+        }
+
+        // Initialize the game
+        loadGame();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #121212; /* Dark background */
+            color: #fff; /* Light text color */
+            height: 100vh;
+        }
+        h1 {
+            margin-top: 20px;
+            color: #e60000; /* Red color for the title */
+        }
+        .search-container {
+            margin: 20px;
+        }
+        .search-container input {
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #e60000; /* Red border for input */
+            border-radius: 5px;
+            width: 250px;
+            background-color: #333; /* Dark background for the search bar */
+            color: #fff; /* White text for the input */
+        }
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 60px);
+            grid-template-rows: repeat(9, 60px);
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .element {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a1a1a; /* Darker background for elements */
+            border-radius: 5px;
+            border: 1px solid #e60000; /* Red border for elements */
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff; /* White text for element details */
+        }
+        .element:hover {
+            background-color: #333; /* Lighter dark on hover */
+        }
+        .selected {
+            background-color: #e60000; /* Red background for selected element */
+        }
+        .group-highlight {
+            background-color: #f44336; /* Highlighted group in a darker red */
+        }
+        .element-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1a1a; /* Dark background for details section */
+            border: 1px solid #e60000; /* Red border for details */
+            width: 300px;
+            border-radius: 10px;
+            display: none;
+            color: #fff; /* White text for element details */
+        }
+        .element-details h3 {
+            margin-top: 0;
+            color: #e60000; /* Red for element name in details */
+        }
+        .element-details p {
+            color: #fff; /* White text for the description */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Periodic Table</h1>
+
+    <div class="search-container">
+        <input type="text" id="searchBar" placeholder="Search by Name, Symbol, or Atomic Number" />
+    </div>
+
+    <div class="periodic-table" id="periodicTable"></div>
+
+    <div class="element-details" id="elementDetails">
+        <h3 id="elementName"></h3>
+        <p><strong>Atomic Number:</strong> <span id="atomicNumber"></span></p>
+        <p><strong>Symbol:</strong> <span id="symbol"></span></p>
+        <p><strong>Group:</strong> <span id="group"></span></p>
+    </div>
+
+    <script>
+        // Full Periodic Table Data (All Elements)
+        const elements = [
+            { number: 1, name: 'Hydrogen', symbol: 'H', group: 1 },
+            { number: 2, name: 'Helium', symbol: 'He', group: 18 },
+            { number: 3, name: 'Lithium', symbol: 'Li', group: 1 },
+            { number: 4, name: 'Beryllium', symbol: 'Be', group: 2 },
+            { number: 5, name: 'Boron', symbol: 'B', group: 13 },
+            { number: 6, name: 'Carbon', symbol: 'C', group: 14 },
+            { number: 7, name: 'Nitrogen', symbol: 'N', group: 15 },
+            { number: 8, name: 'Oxygen', symbol: 'O', group: 16 },
+            { number: 9, name: 'Fluorine', symbol: 'F', group: 17 },
+            { number: 10, name: 'Neon', symbol: 'Ne', group: 18 },
+            { number: 11, name: 'Sodium', symbol: 'Na', group: 1 },
+            { number: 12, name: 'Magnesium', symbol: 'Mg', group: 2 },
+            { number: 13, name: 'Aluminum', symbol: 'Al', group: 13 },
+            { number: 14, name: 'Silicon', symbol: 'Si', group: 14 },
+            { number: 15, name: 'Phosphorus', symbol: 'P', group: 15 },
+            { number: 16, name: 'Sulfur', symbol: 'S', group: 16 },
+            { number: 17, name: 'Chlorine', symbol: 'Cl', group: 17 },
+            { number: 18, name: 'Argon', symbol: 'Ar', group: 18 },
+            { number: 19, name: 'Potassium', symbol: 'K', group: 1 },
+            { number: 20, name: 'Calcium', symbol: 'Ca', group: 2 },
+            { number: 21, name: 'Scandium', symbol: 'Sc', group: 3 },
+            { number: 22, name: 'Titanium', symbol: 'Ti', group: 4 },
+            { number: 23, name: 'Vanadium', symbol: 'V', group: 5 },
+            { number: 24, name: 'Chromium', symbol: 'Cr', group: 6 },
+            { number: 25, name: 'Manganese', symbol: 'Mn', group: 7 },
+            { number: 26, name: 'Iron', symbol: 'Fe', group: 8 },
+            { number: 27, name: 'Cobalt', symbol: 'Co', group: 9 },
+            { number: 28, name: 'Nickel', symbol: 'Ni', group: 10 },
+            { number: 29, name: 'Copper', symbol: 'Cu', group: 11 },
+            { number: 30, name: 'Zinc', symbol: 'Zn', group: 12 },
+            { number: 31, name: 'Gallium', symbol: 'Ga', group: 13 },
+            { number: 32, name: 'Germanium', symbol: 'Ge', group: 14 },
+            { number: 33, name: 'Arsenic', symbol: 'As', group: 15 },
+            { number: 34, name: 'Selenium', symbol: 'Se', group: 16 },
+            { number: 35, name: 'Bromine', symbol: 'Br', group: 17 },
+            { number: 36, name: 'Krypton', symbol: 'Kr', group: 18 },
+            { number: 37, name: 'Rubidium', symbol: 'Rb', group: 1 },
+            { number: 38, name: 'Strontium', symbol: 'Sr', group: 2 },
+            { number: 39, name: 'Yttrium', symbol: 'Y', group: 3 },
+            { number: 40, name: 'Zirconium', symbol: 'Zr', group: 4 },
+            { number: 41, name: 'Niobium', symbol: 'Nb', group: 5 },
+            { number: 42, name: 'Molybdenum', symbol: 'Mo', group: 6 },
+            { number: 43, name: 'Technetium', symbol: 'Tc', group: 7 },
+            { number: 44, name: 'Ruthenium', symbol: 'Ru', group: 8 },
+            { number: 45, name: 'Rhodium', symbol: 'Rh', group: 9 },
+            { number: 46, name: 'Palladium', symbol: 'Pd', group: 10 },
+            { number: 47, name: 'Silver', symbol: 'Ag', group: 11 },
+            { number: 48, name: 'Cadmium', symbol: 'Cd', group: 12 },
+            { number: 49, name: 'Indium', symbol: 'In', group: 13 },
+            { number: 50, name: 'Tin', symbol: 'Sn', group: 14 },
+            { number: 51, name: 'Antimony', symbol: 'Sb', group: 15 },
+            { number: 52, name: 'Tellurium', symbol: 'Te', group: 16 },
+            { number: 53, name: 'Iodine', symbol: 'I', group: 17 },
+            { number: 54, name: 'Xenon', symbol: 'Xe', group: 18 },
+            { number: 55, name: 'Cesium', symbol: 'Cs', group: 1 },
+            { number: 56, name: 'Barium', symbol: 'Ba', group: 2 },
+            { number: 57, name: 'Lanthanum', symbol: 'La', group: 3 },
+            { number: 58, name: 'Cerium', symbol: 'Ce', group: 3 },
+            { number: 59, name: 'Praseodymium', symbol: 'Pr', group: 3 },
+            { number: 60, name: 'Neodymium', symbol: 'Nd', group: 3 },
+            { number: 61, name: 'Promethium', symbol: 'Pm', group: 3 },
+            { number: 62, name: 'Samarium', symbol: 'Sm', group: 3 },
+            { number: 63, name: 'Europium', symbol: 'Eu', group: 3 },
+            { number: 64, name: 'Gadolinium', symbol: 'Gd', group: 3 },
+            { number: 65, name: 'Terbium', symbol: 'Tb', group: 3 },
+            { number: 66, name: 'Dysprosium', symbol: 'Dy', group: 3 },
+            { number: 67, name: 'Holmium', symbol: 'Ho', group: 3 },
+            { number: 68, name: 'Erbium', symbol: 'Er', group: 3 },
+            { number: 69, name: 'Thulium', symbol: 'Tm', group: 3 },
+            { number: 70, name: 'Ytterbium', symbol: 'Yb', group: 3 },
+            { number: 71, name: 'Lutetium', symbol: 'Lu', group: 3 },
+            { number: 72, name: 'Hafnium', symbol: 'Hf', group: 4 },
+            { number: 73, name: 'Tantalum', symbol: 'Ta', group: 5 },
+            { number: 74, name: 'Tungsten', symbol: 'W', group: 6 },
+            { number: 75, name: 'Rhenium', symbol: 'Re', group: 7 },
+            { number: 76, name: 'Osmium', symbol: 'Os', group: 8 },
+            { number: 77, name: 'Iridium', symbol: 'Ir', group: 9 },
+            { number: 78, name: 'Platinum', symbol: 'Pt', group: 10 },
+            { number: 79, name: 'Gold', symbol: 'Au', group: 11 },
+            { number: 80, name: 'Mercury', symbol: 'Hg', group: 12 },
+            { number: 81, name: 'Thallium', symbol: 'Tl', group: 13 },
+            { number: 82, name: 'Lead', symbol: 'Pb', group: 14 },
+            { number: 83, name: 'Bismuth', symbol: 'Bi', group: 15 },
+            { number: 84, name: 'Polonium', symbol: 'Po', group: 16 },
+            { number: 85, name: 'Astatine', symbol: 'At', group: 17 },
+            { number: 86, name: 'Radon', symbol: 'Rn', group: 18 },
+            { number: 87, name: 'Francium', symbol: 'Fr', group: 1 },
+            { number: 88, name: 'Radium', symbol: 'Ra', group: 2 },
+            { number: 89, name: 'Actinium', symbol: 'Ac', group: 3 },
+            { number: 90, name: 'Thorium', symbol: 'Th', group: 4 },
+            { number: 91, name: 'Protactinium', symbol: 'Pa', group: 5 },
+            { number: 92, name: 'Uranium', symbol: 'U', group: 6 },
+            { number: 93, name: 'Neptunium', symbol: 'Np', group: 7 },
+            { number: 94, name: 'Plutonium', symbol: 'Pu', group: 8 },
+            { number: 95, name: 'Americium', symbol: 'Am', group: 9 },
+            { number: 96, name: 'Curium', symbol: 'Cm', group: 10 },
+            { number: 97, name: 'Berkelium', symbol: 'Bk', group: 11 },
+            { number: 98, name: 'Californium', symbol: 'Cf', group: 12 },
+            { number: 99, name: 'Einsteinium', symbol: 'Es', group: 13 },
+            { number: 100, name: 'Fermium', symbol: 'Fm', group: 14 },
+            { number: 101, name: 'Mendelevium', symbol: 'Md', group: 15 },
+            { number: 102, name: 'Nobelium', symbol: 'No', group: 16 },
+            { number: 103, name: 'Lawrencium', symbol: 'Lr', group: 17 },
+            { number: 104, name: 'Rutherfordium', symbol: 'Rf', group: 4 },
+            { number: 105, name: 'Dubnium', symbol: 'Db', group: 5 },
+            { number: 106, name: 'Seaborgium', symbol: 'Sg', group: 6 },
+            { number: 107, name: 'Bohrium', symbol: 'Bh', group: 7 },
+            { number: 108, name: 'Hassium', symbol: 'Hs', group: 8 },
+            { number: 109, name: 'Meitnerium', symbol: 'Mt', group: 9 },
+            { number: 110, name: 'Darmstadtium', symbol: 'Ds', group: 10 },
+            { number: 111, name: 'Roentgenium', symbol: 'Rg', group: 11 },
+            { number: 112, name: 'Copernicium', symbol: 'Cn', group: 12 },
+            { number: 113, name: 'Nihonium', symbol: 'Nh', group: 13 },
+            { number: 114, name: 'Flerovium', symbol: 'Fl', group: 14 },
+            { number: 115, name: 'Moscovium', symbol: 'Mc', group: 15 },
+            { number: 116, name: 'Livermorium', symbol: 'Lv', group: 16 },
+            { number: 117, name: 'Tennessine', symbol: 'Ts', group: 17 },
+            { number: 118, name: 'Oganesson', symbol: 'Og', group: 18 }
+        ];
+
+        // Render the periodic table
+        function createTable() {
+            const periodicTable = document.getElementById('periodicTable');
+            periodicTable.innerHTML = ''; // Clear existing table
+            elements.forEach(element => {
+                const elDiv = document.createElement('div');
+                elDiv.className = 'element';
+                elDiv.innerHTML = `
+                    <strong>${element.symbol}</strong><br>
+                    <span>${element.number}</span>
+                `;
+                elDiv.addEventListener('click', () => showElementDetails(element));
+                periodicTable.appendChild(elDiv);
+            });
+        }
+
+        // Display element details
+        function showElementDetails(element) {
+            document.getElementById('elementName').textContent = element.name;
+            document.getElementById('atomicNumber').textContent = element.number;
+            document.getElementById('symbol').textContent = element.symbol;
+            document.getElementById('group').textContent = element.group;
+
+            const elementDivs = document.querySelectorAll('.element');
+            elementDivs.forEach(div => div.classList.remove('selected'));
+
+            // Highlight selected element
+            const selectedElementDiv = Array.from(elementDivs).find(div => div.textContent.includes(element.symbol));
+            if (selectedElementDiv) {
+                selectedElementDiv.classList.add('selected');
+            }
+
+            // Show element details
+            document.getElementById('elementDetails').style.display = 'block';
+        }
+
+        // Handle search
+        document.getElementById('searchBar').addEventListener('input', function(event) {
+            const query = event.target.value.toLowerCase();
+            const filteredElements = elements.filter(element => 
+                element.name.toLowerCase().includes(query) || 
+                element.symbol.toLowerCase().includes(query) || 
+                element.number.toString().includes(query)
+            );
+            updateTable(filteredElements);
+        });
+
+        // Update table with filtered elements
+        function updateTable(filteredElements) {
+            const periodicTable = document.getElementById('periodicTable');
+            periodicTable.innerHTML = '';
+            filteredElements.forEach(element => {
+                const elDiv = document.createElement('div');
+                elDiv.className = 'element';
+                elDiv.innerHTML = `
+                    <strong>${element.symbol}</strong><br>
+                    <span>${element.number}</span>
+                `;
+                elDiv.addEventListener('click', () => showElementDetails(element));
+                periodicTable.appendChild(elDiv);
+            });
+        }
+
+        // Create the initial table
+        createTable();
+    </script>
+</body>
+</html>
